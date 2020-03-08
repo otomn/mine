@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+    <meta name="description" content="minesweeper game">
+    <meta name="author" content="Toby">
+
+    <title>Mine Sweeper</title>
+    <style>
+        html, body{
+          margin: 0;
+          height: 100%;
+          text-align: center;
+        }
+        body{
+          background-color: blueviolet;
+        }
+        div{
+          margin: 5pt 5pt 5pt 5pt;
+          border-radius: 5pt;
+        }
+        p{
+          margin: 0;
+        }
+        input, button, #msg{
+          color: white;
+          font-size: 15pt;
+          border-radius: 5pt;
+          border-width: 0pt;
+          padding-left: 5pt;
+        }
+        #msg{
+         cursor: default;
+        }
+        #msg.gray{
+          background-color: darkgray;
+        }
+        #msg.red{
+          background-color: crimson;
+        }
+        #msg.green{
+          background-color: limegreen;
+        }
+        input{
+          color: black;
+          background-color: white;
+          width: 100pt;
+        }
+        button, tile{
+          background-color: dodgerblue;
+          cursor: pointer;
+        }
+        button:active tile:active{
+          background-color: lightskyblue;
+        }
+        tile{
+          color: dodgerblue;
+          margin: 0;
+          font-size: 15pt;
+          border-width: 1pt;
+          border-style: solid;
+          border-color: whitesmoke;
+          text-align: center;
+          display: inline-block;
+          height: 16pt;
+          width: 16pt;
+        }
+        tile.empty{
+          cursor: default;
+          color: white;
+          background-color: white;
+        }
+        tile.clicked{
+          cursor: default;
+          color: dodgerblue;
+          background-color: white;
+        }
+        tile.mine{
+          color: crimson;
+          background-color: crimson;
+        }
+        tile.mark{
+          color: orange;
+          background-color: orange;
+        }
+        tile.explode{
+          color: black;
+          background-color: black;
+        }
+    </style>
+  </head>
+
+  <body>
+
+    <div id="messageWrapper">
+      <button id="msg" class="gray" name="Message">Welcome</button>
+    </div>
+
+    <div id="board">
+    </div>
+
+    <div id="menu">
+      <input id="dimX" type="number" name="DimX" placeholder="Board width" min="1" max="100"></input>
+      <input id="dimY" name="DimY" placeholder="Board height" type="number" min="1" max="100"></input>
+      <input id="mineCount" name="MineCount" placeholder="Mine count" type="number" min="1" max="10000"></input>
+      <button id="start" name="Start" onclick="startClicked()">Start</button>
+    </div>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript">
+
+      var col = 0;
+      var row = 0;
+      var mine = 0;
+
+      $(document).keypress((e)=>{
+        if (e.key === "Enter") $("#start").click();
+      })
+
+      function setMsg(msg, type){
+        container = $("#msg")[0];
+        container.className = type;
+        container.textContent = msg;
+      }
+
+      function getNum(id){
+        var e = $("#" + id)[0];
+        var val = e.valueAsNumber;
+        if (val < e.min){
+          setMsg(e.placeholder + " is too small", "red");
+        } else if (val > e.max){
+          setMsg(e.placeholder + " is too big", "red");
+        } else if (val <= e.max && val >= e.min){
+          return val;
+        } else {
+          setMsg(e.placeholder + " is invalid", "red");
+        }
+        return null;
+      }
+
+      function startClicked(){
+        if (!(col = getNum("dimX"))) return;
+        if (!(row = getNum("dimY"))) return;
+        if (!(mine = getNum("mineCount"))) return;
+        if (mine >= col * row){
+          setMsg(e.placeholder + " is invalid", "red");
+          return;
+        }
+        startGame();
+      }
+
+      function startGame(){
+        setMsg("Game started", "green");
+        $("#start")[0].textContent = "Restart";
+        var board = $("#board")[0];
+        board.innerHTML = "";
+        for (var r = 0; r < row; r++){
+          var p = document.createElement("p");
+          board.appendChild(p);
+          p.id = "r" + r;
+          for (var c = 0; c < col; c++){
+            var tile = document.createElement("tile");
+            p.appendChild(tile);
+            tile.row = r;
+            tile.col = c;
+            tile.id = "t" + r + "c" + c;
+            tile.textContent = "0";
+            tile.isMine = false;
+            tile.className = "none";
+            tile.onclick = tileClick;
+          }
+        }
+        for (var i = 0; i < mine; ){
+          var r = randInt(row);
+          var c = randInt(col);
+          var tile = getTile(r, c);
+          if (tile && !tile.isMine){
+            tile.isMine = true;
+            i++;
+          }
+        }
+      }
+
+      function getTile(r, c){
+        return $("#t" + r + "c" + c)[0];
+      }
+
+      function getNearBy(r, c){
+        result = []
+        for (var i = -1; i <= 1; i++){
+          for (var j = -1; j <= 1; j++){
+            if (i == 0 && j == 0) continue;
+            var tile = getTile(i + r, j + c);
+            if (tile) result.push(tile);
+          }
+        }
+        return result;
+      }
+
+      function randInt(max){
+        return Math.floor(Math.random() * max);
+      }
+
+      function tileClick(e){
+        var tile = e.target;
+        if (e.metaKey || e.altKey || e.ctrlKey){
+         markTile(tile);
+        } else {
+          if (checkTile(tile)) return;;
+        }
+        clear = $("tile.clicked, tile.empty").size();
+        mark = $("tile.mine").size();
+        totalClean = col * row - mine;
+        if (clear === totalClean){
+          setMsg("Game Cleared", "green");
+          $("tile.none").each((i)=>{ i.className = "mine" });
+        } else {
+          var msg = "Cleared " + clear + "/" + totalClean;
+          msg += ", Marked " + mark + "/" + mine;
+          setMsg(msg, "gray");
+        }
+      }
+
+      function checkTile(tile){
+        if (tile.isMine){
+          tile.className = "explode";
+          setMsg("Game lost", "red");
+          return true;
+        }
+        tile.className = "clicked";
+        nearBy = getNearBy(tile.row, tile.col);
+        mineNearBy = 0;
+        nearBy.forEach((i)=>{ if (i.isMine) mineNearBy++; });
+        tile.textContent = mineNearBy;
+        if (mineNearBy === 0){
+          tile.className = "empty";
+          nearBy.forEach((i)=>{ if (i.className === "none") i.click() });
+        }
+        return false;
+      }
+
+      function markTile(tile){
+        switch(tile.className){
+          case "none":
+            tile.className = "mine";
+            break;
+          case "mine":
+            tile.className = "mark";
+            break;
+          case "mark":
+            tile.className = "none";
+            break;
+        }
+      }
+    </script>
+  </body>
+</html>
