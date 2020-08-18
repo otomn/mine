@@ -9,12 +9,10 @@
 
     <title>Mine Sweeper</title>
     <style>
-        html, body{
+        body{
           margin: 0;
           height: 100%;
           text-align: center;
-        }
-        body{
           background-color: blueviolet;
         }
         div{
@@ -52,8 +50,9 @@
           background-color: dodgerblue;
           cursor: pointer;
         }
-        button:active tile:active{
+        button:active, tile:active{
           background-color: lightskyblue;
+          color: lightskyblue;
         }
         tile{
           color: dodgerblue;
@@ -66,6 +65,12 @@
           display: inline-block;
           height: 16pt;
           width: 16pt;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
         }
         tile.empty{
           cursor: default;
@@ -206,7 +211,7 @@
       function tileClick(e){
         var tile = e.target;
         if (e.metaKey || e.altKey || e.ctrlKey){
-         markTile(tile);
+          markTile(tile);
         } else {
           if (checkTile(tile)) return;;
         }
@@ -215,7 +220,7 @@
         totalClean = col * row - mine;
         if (clear === totalClean){
           setMsg("Game Cleared", "green");
-          $("tile.none").each((i)=>{ i.className = "mine" });
+          $("tile.none").each((i, t)=>{ t.className = "mine" });
         } else {
           var msg = "Cleared " + clear + "/" + totalClean;
           msg += ", Marked " + mark + "/" + mine;
